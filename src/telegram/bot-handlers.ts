@@ -38,6 +38,7 @@ export const registerTelegramHandlers = ({
   shouldSkipUpdate,
   processMessage,
   logger,
+  gating,
 }: RegisterTelegramHandlerParams) => {
   const TELEGRAM_TEXT_FRAGMENT_START_THRESHOLD_CHARS = 4000;
   const TELEGRAM_TEXT_FRAGMENT_MAX_GAP_MS = 1500;
@@ -356,6 +357,21 @@ export const registerTelegramHandlers = ({
           if (!allowed) {
             return;
           }
+        }
+      }
+
+      if (gating) {
+        const gatingResult = await gating.handleCallback({
+          data,
+          actor: {
+            channel: "telegram",
+            chatId: String(chatId),
+            userId: senderId || undefined,
+            username: senderUsername || undefined,
+          },
+        });
+        if (gatingResult.handled) {
+          return;
         }
       }
 

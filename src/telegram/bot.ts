@@ -22,6 +22,8 @@ import {
   resolveChannelGroupRequireMention,
 } from "../config/group-policy.js";
 import { loadSessionStore, resolveStorePath } from "../config/sessions.js";
+import { createGatingService } from "../gating/service.js";
+import { createTelegramApprovalMessenger } from "../gating/telegram.js";
 import { danger, logVerbose, shouldLogVerbose } from "../globals.js";
 import { formatUncaughtError } from "../infra/errors.js";
 import { enqueueSystemEvent } from "../infra/system-events.js";
@@ -502,6 +504,13 @@ export function createTelegramBot(opts: TelegramBotOptions) {
     shouldSkipUpdate,
     processMessage,
     logger,
+    gating: createGatingService({
+      cfg,
+      messenger: createTelegramApprovalMessenger({
+        accountId: account.accountId,
+        api: bot.api,
+      }),
+    }),
   });
 
   return bot;

@@ -11,6 +11,7 @@ import type {
   GatewayConfig,
   TalkConfig,
 } from "./types.gateway.js";
+import type { GatingConfig } from "./types.gating.js";
 import type { HooksConfig } from "./types.hooks.js";
 import type {
   AudioConfig,
@@ -86,6 +87,7 @@ export type OpenClawConfig = {
   messages?: MessagesConfig;
   commands?: CommandsConfig;
   approvals?: ApprovalsConfig;
+  gating?: GatingConfig;
   session?: SessionConfig;
   web?: WebConfig;
   channels?: ChannelsConfig;
