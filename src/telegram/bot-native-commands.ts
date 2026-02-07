@@ -95,6 +95,12 @@ export type RegisterTelegramHandlerParams = {
     },
   ) => Promise<void>;
   logger: ReturnType<typeof getChildLogger>;
+  gating?: {
+    handleCallback: (params: {
+      data: string;
+      actor: { channel: "telegram"; chatId: string; userId?: string; username?: string };
+    }) => Promise<{ handled: boolean; reason?: string }>;
+  };
 };
 
 type RegisterTelegramNativeCommandsParams = {
