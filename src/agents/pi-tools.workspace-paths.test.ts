@@ -5,10 +5,16 @@ import { describe, expect, it } from "vitest";
 import { createOpenClawCodingTools } from "./pi-tools.js";
 
 async function withTempDir<T>(prefix: string, fn: (dir: string) => Promise<T>) {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), prefix));
+  const baseDir = os.tmpdir();
+  const dir = await fs.mkdtemp(path.join(baseDir, prefix));
+  const originalCwd = process.cwd();
   try {
     return await fn(dir);
   } finally {
+    const currentCwd = process.cwd();
+    if (currentCwd === dir || currentCwd.startsWith(`${dir}${path.sep}`)) {
+      process.chdir(originalCwd);
+    }
     await fs.rm(dir, { recursive: true, force: true });
   }
 }
