@@ -1,0 +1,66 @@
+OpenClaw Market Ingestion + Sentiment (gatedclaw)
+
+Overview
+- gatedclaw writes deterministic NDJSON into state/ for coin-calc to consume.
+- News ingest (RSS) → state/market/news/articles.ndjson
+- Sentiment labels → state/market/news/labels.ndjson
+- Market tape → state/market/tape/prices.ndjson
+- Aggregated sentiment buckets → state/coin_calc/sentiment.ndjson
+- Run metrics → state/ops/runs.ndjson
+
+Config (openclaw.json)
+{
+  "news": {
+    "rssFeeds": [
+      { "name": "CoinDesk", "url": "https://www.coindesk.com/arc/outboundfeeds/rss/" },
+      { "name": "Reuters Markets", "url": "https://www.reuters.com/markets/rss" }
+    ],
+    "maxItemsPerFeed": 10,
+    "fetchTimeoutMs": 12000,
+    "maxArticleBytes": 1000000,
+    "userAgent": "OpenClawMarketBot/1.0",
+    "rateLimitPerHostPerMinute": 30
+  },
+  "marketTape": {
+    "symbols": ["BTC", "ETH"],
+    "sources": [
+      { "name": "coingecko", "kind": "coingecko", "enabled": true },
+      { "name": "coinbase", "kind": "coinbase", "enabled": true },
+      { "name": "kraken", "kind": "kraken", "enabled": true }
+    ],
+    "pollIntervalSeconds": 60,
+    "staleAfterSeconds": 300
+  },
+  "sentiment": {
+    "enabled": true,
+    "model": { "name": "openclaw/sentiment-lite", "tier": "standard" },
+    "triage": { "enabled": true, "minRelevanceScore": 0.2 },
+    "tagging": { "enabled": true, "tagSet": ["ETF", "CPI", "SEC", "DeFi"] },
+    "maxArticlesPerRun": 50,
+    "maxDailyTokens": 250000,
+    "maxSingleRunCostUsd": 5
+  }
+}
+
+How to run
+- News ingest (RSS fetch + extraction):
+  bun tools/run_news_ingest.ts
+- Market tape ingest (prices + consensus):
+  bun tools/run_market_tape_ingest.ts
+- Sentiment approval request (posts Telegram card with Approve/Deny):
+  node dist/cli/sentiment_request_approval.js --maxArticles 50
+- Sentiment labeler (requires approved budgeted run):
+  bun tools/run_sentiment_labeler.ts
+
+State outputs
+- state/market/news/articles.ndjson
+- state/market/news/labels.ndjson
+- state/market/tape/prices.ndjson
+- state/coin_calc/sentiment.ndjson
+- state/ops/runs.ndjson
+
+Token and cost accounting
+- Approval request estimates tokens by article length + model prompt, then estimates cost
+  using a tier-based $/1K heuristic (standard/premium/low).
+- Sentiment labeler enforces maxDailyTokens and maxSingleRunCostUsd from config.
+- Actual run token usage and cost estimate are recorded in state/ops/runs.ndjson.

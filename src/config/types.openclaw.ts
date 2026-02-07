@@ -13,6 +13,7 @@ import type {
 } from "./types.gateway.js";
 import type { GatingConfig } from "./types.gating.js";
 import type { HooksConfig } from "./types.hooks.js";
+import type { MarketTapeConfig, NewsConfig, SentimentConfig } from "./types.market.js";
 import type {
   AudioConfig,
   BroadcastConfig,
@@ -88,6 +89,9 @@ export type OpenClawConfig = {
   commands?: CommandsConfig;
   approvals?: ApprovalsConfig;
   gating?: GatingConfig;
+  news?: NewsConfig;
+  marketTape?: MarketTapeConfig;
+  sentiment?: SentimentConfig;
   session?: SessionConfig;
   web?: WebConfig;
   channels?: ChannelsConfig;
