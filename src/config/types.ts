@@ -10,6 +10,7 @@ export * from "./types.channels.js";
 export * from "./types.openclaw.js";
 export * from "./types.cron.js";
 export * from "./types.discord.js";
+export * from "./types.decision-evaluation.js";
 export * from "./types.decision.js";
 export * from "./types.gating.js";
 export * from "./types.googlechat.js";

@@ -5,6 +5,7 @@ import type { DiagnosticsConfig, LoggingConfig, SessionConfig, WebConfig } from 
 import type { BrowserConfig } from "./types.browser.js";
 import type { ChannelsConfig } from "./types.channels.js";
 import type { CronConfig } from "./types.cron.js";
+import type { DecisionEvaluationConfig } from "./types.decision-evaluation.js";
 import type { DecisionConfig } from "./types.decision.js";
 import type {
   CanvasHostConfig,
@@ -92,6 +93,7 @@ export type OpenClawConfig = {
   approvals?: ApprovalsConfig;
   gating?: GatingConfig;
   decision?: DecisionConfig;
+  decisionEvaluation?: DecisionEvaluationConfig;
   news?: NewsConfig;
   marketTape?: MarketTapeConfig;
   sentiment?: SentimentConfig;

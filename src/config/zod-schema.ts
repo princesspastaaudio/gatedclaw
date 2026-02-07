@@ -247,6 +247,29 @@ export const OpenClawSchema = z
       })
       .strict()
       .optional(),
+    decisionEvaluation: z
+      .object({
+        enabled: z.boolean().optional(),
+        horizons: z.array(z.string()).optional(),
+        holdEpsilonReturnPct: z.number().nonnegative().optional(),
+        minTapeHealthSourcesOk: z.number().int().nonnegative().optional(),
+        maxDispersionPct: z.number().nonnegative().optional(),
+        minAgeMinutesBeforeEval: z.number().int().nonnegative().optional(),
+        maxDecisionsPerRun: z.number().int().positive().optional(),
+        accuracyWindowN: z.number().int().positive().optional(),
+        accuracyWindowDays: z.number().int().positive().optional(),
+        confidenceBuckets: z.array(z.number().min(0).max(1)).optional(),
+        notifications: z
+          .object({
+            enabled: z.boolean().optional(),
+            level: z.union([z.literal("errors-only"), z.literal("summary")]).optional(),
+            adminOnly: z.boolean().optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
     news: z
       .object({
         rssFeeds: z
