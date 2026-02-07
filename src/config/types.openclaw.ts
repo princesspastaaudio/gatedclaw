@@ -5,6 +5,7 @@ import type { DiagnosticsConfig, LoggingConfig, SessionConfig, WebConfig } from 
 import type { BrowserConfig } from "./types.browser.js";
 import type { ChannelsConfig } from "./types.channels.js";
 import type { CronConfig } from "./types.cron.js";
+import type { DecisionConfig } from "./types.decision.js";
 import type {
   CanvasHostConfig,
   DiscoveryConfig,
@@ -25,6 +26,7 @@ import type { NodeHostConfig } from "./types.node-host.js";
 import type { PluginsConfig } from "./types.plugins.js";
 import type { SkillsConfig } from "./types.skills.js";
 import type { ToolsConfig } from "./types.tools.js";
+import type { TradingConfig } from "./types.trading.js";
 
 export type OpenClawConfig = {
   meta?: {
@@ -89,9 +91,11 @@ export type OpenClawConfig = {
   commands?: CommandsConfig;
   approvals?: ApprovalsConfig;
   gating?: GatingConfig;
+  decision?: DecisionConfig;
   news?: NewsConfig;
   marketTape?: MarketTapeConfig;
   sentiment?: SentimentConfig;
+  trading?: TradingConfig;
   session?: SessionConfig;
   web?: WebConfig;
   channels?: ChannelsConfig;

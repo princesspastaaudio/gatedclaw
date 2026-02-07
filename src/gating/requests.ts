@@ -4,6 +4,7 @@ import type { LedgerPatch } from "./types.js";
 import type { ApprovalKind } from "./types.js";
 import type { ApprovalResource } from "./types.js";
 import type { ApprovalPayload } from "./types.js";
+import type { TradeExecutePayload } from "./types.js";
 
 export async function requestCronApplyApproval(params: {
   proposalId: string;
@@ -43,6 +44,18 @@ export async function requestBudgetedRunApproval(params: {
 }): Promise<{ ok: boolean; request?: ApprovalRequest; reason?: string }> {
   const kind: ApprovalKind = "cron.apply_budgeted";
   const resource: ApprovalResource = { type: "sentiment_run", id: params.runId };
+  const payload: ApprovalPayload = params.payload;
+  return await params.service.requestApproval({ kind, resource, payload, actor: params.actor });
+}
+
+export async function requestTradeExecuteApproval(params: {
+  proposalId: string;
+  actor: ApprovalActor;
+  payload: TradeExecutePayload;
+  service: ReturnType<typeof createGatingService>;
+}): Promise<{ ok: boolean; request?: ApprovalRequest; reason?: string }> {
+  const kind: ApprovalKind = "trade.execute";
+  const resource: ApprovalResource = { type: "trade", id: params.proposalId };
   const payload: ApprovalPayload = params.payload;
   return await params.service.requestApproval({ kind, resource, payload, actor: params.actor });
 }
