@@ -24,6 +24,11 @@ describe("gating policy", () => {
           request: { chatClasses: ["admin"] },
           approve: { chatClasses: ["admin"] },
         },
+        {
+          resource: "exchange:*",
+          request: { chatClasses: ["admin"] },
+          approve: { chatClasses: ["admin"] },
+        },
       ],
     },
   };
@@ -86,5 +91,15 @@ describe("gating policy", () => {
     });
     expect(denied.allowed).toBe(false);
     expect(allowed.allowed).toBe(true);
+  });
+
+  it("matches exchange resources", () => {
+    const result = isApprovalActionAllowed({
+      cfg,
+      action: "request",
+      resource: { type: "exchange", id: "kraken" },
+      actor: { channel: "telegram", chatId: "100", userId: "55" },
+    });
+    expect(result.allowed).toBe(true);
   });
 });
