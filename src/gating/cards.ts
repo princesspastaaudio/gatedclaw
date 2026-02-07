@@ -1,4 +1,4 @@
-import type { ApprovalRequest, LedgerPatchPayload } from "./types.js";
+import type { ApprovalRequest, BudgetedRunPayload, LedgerPatchPayload } from "./types.js";
 import { buildGatingCallbackData } from "./callback-data.js";
 import { loadCronProposalSummary } from "./cronops.js";
 import { summarizeLedgerPatch } from "./ledger-store.js";
@@ -97,6 +97,40 @@ export async function buildApprovalCard(request: ApprovalRequest): Promise<Appro
         { text: "❌ Deny", callback_data: buildGatingCallbackData(request.approvalId, "deny") },
       ],
     ];
+  } else if (request.kind === "cron.apply_budgeted") {
+    header = "Sentiment Run";
+    resourceLine = `Resource: sentiment ${request.resource.id}`;
+    const payload = request.payload as BudgetedRunPayload;
+    summaryLine = `Summary: ${payload.pendingArticles} pending · est ${payload.estimatedTokens} tokens · $${payload.estimatedCostUsd.toFixed(4)}`;
+    const modelLine = `Model: ${payload.model.name}${
+      payload.model.tier ? ` (${payload.model.tier})` : ""
+    }`;
+    const expectedLine = `Expected value: ${payload.expectedValue}`;
+    buttons = [
+      [
+        {
+          text: "✅ Approve",
+          callback_data: buildGatingCallbackData(request.approvalId, "approve"),
+        },
+        { text: "❌ Deny", callback_data: buildGatingCallbackData(request.approvalId, "deny") },
+      ],
+    ];
+    const statusLine = `Status: ${formatStatusLine(request)}`;
+    const lines = [
+      header,
+      resourceLine,
+      summaryLine,
+      modelLine,
+      expectedLine,
+      statusLine,
+      `Approval: ${request.approvalId}`,
+    ]
+      .filter(Boolean)
+      .slice(0, 10);
+    return {
+      text: lines.join("\n"),
+      buttons: request.status === "pending" ? buttons : [],
+    };
   }
 
   const statusLine = `Status: ${formatStatusLine(request)}`;

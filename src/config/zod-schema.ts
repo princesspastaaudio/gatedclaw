@@ -224,6 +224,76 @@ export const OpenClawSchema = z
     commands: CommandsSchema,
     approvals: ApprovalsSchema,
     gating: GatingSchema,
+    news: z
+      .object({
+        rssFeeds: z
+          .array(
+            z
+              .object({
+                name: z.string().optional(),
+                url: z.string().optional(),
+                tags: z.array(z.string()).optional(),
+              })
+              .strict(),
+          )
+          .optional(),
+        maxItemsPerFeed: z.number().int().positive().optional(),
+        fetchTimeoutMs: z.number().int().positive().optional(),
+        maxArticleBytes: z.number().int().positive().optional(),
+        userAgent: z.string().optional(),
+        rateLimitPerHostPerMinute: z.number().int().positive().optional(),
+      })
+      .strict()
+      .optional(),
+    marketTape: z
+      .object({
+        symbols: z.array(z.string()).optional(),
+        sources: z
+          .array(
+            z
+              .object({
+                name: z.string().optional(),
+                kind: z.string().optional(),
+                enabled: z.boolean().optional(),
+              })
+              .strict(),
+          )
+          .optional(),
+        pollIntervalSeconds: z.number().int().positive().optional(),
+        staleAfterSeconds: z.number().int().positive().optional(),
+      })
+      .strict()
+      .optional(),
+    sentiment: z
+      .object({
+        enabled: z.boolean().optional(),
+        model: z
+          .object({
+            name: z.string().optional(),
+            tier: z.string().optional(),
+          })
+          .strict()
+          .optional(),
+        triage: z
+          .object({
+            enabled: z.boolean().optional(),
+            minRelevanceScore: z.number().min(0).max(1).optional(),
+          })
+          .strict()
+          .optional(),
+        tagging: z
+          .object({
+            enabled: z.boolean().optional(),
+            tagSet: z.array(z.string()).optional(),
+          })
+          .strict()
+          .optional(),
+        maxArticlesPerRun: z.number().int().positive().optional(),
+        maxDailyTokens: z.number().int().positive().optional(),
+        maxSingleRunCostUsd: z.number().positive().optional(),
+      })
+      .strict()
+      .optional(),
     session: SessionSchema,
     cron: z
       .object({

@@ -1,6 +1,10 @@
-export type ApprovalKind = "cron.apply" | "cron.apply_recreate" | "ledger.patch";
+export type ApprovalKind =
+  | "cron.apply"
+  | "cron.apply_recreate"
+  | "cron.apply_budgeted"
+  | "ledger.patch";
 export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
-export type ApprovalResourceType = "cron_proposal" | "ledger";
+export type ApprovalResourceType = "cron_proposal" | "ledger" | "sentiment_run";
 
 export type ApprovalResource = {
   type: ApprovalResourceType;
@@ -43,7 +47,18 @@ export type LedgerPatch = {
   remove?: string[];
 };
 
-export type ApprovalPayload = CronApplyPayload | LedgerPatchPayload;
+export type BudgetedRunPayload = {
+  runId: string;
+  job: "sentiment_labeler";
+  pendingArticles: number;
+  maxArticles: number;
+  estimatedTokens: number;
+  estimatedCostUsd: number;
+  model: { name: string; tier?: string };
+  expectedValue: string;
+};
+
+export type ApprovalPayload = CronApplyPayload | LedgerPatchPayload | BudgetedRunPayload;
 
 export type ApprovalRequest = {
   approvalId: string;

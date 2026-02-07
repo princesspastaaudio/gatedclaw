@@ -6,9 +6,11 @@ import type {
   ApprovalActor,
   ApprovalKind,
   ApprovalPayload,
+  BudgetedRunPayload,
   CronApplyPayload,
   LedgerPatchPayload,
 } from "./types.js";
+import { writeBudgetedApproval } from "../ops/budgeted.js";
 import { resolveCronOpsRoot, proposalExists, isValidProposalId } from "./cronops.js";
 import { applyLedgerPatch, validateLedgerPatch } from "./ledger-store.js";
 
@@ -94,11 +96,44 @@ async function validateLedgerPayload(payload: LedgerPatchPayload): Promise<Execu
   return validateLedgerPatch(payload.patch);
 }
 
+async function validateBudgetedPayload(payload: BudgetedRunPayload): Promise<ExecutorValidation> {
+  if (!payload?.runId || typeof payload.runId !== "string") {
+    return { ok: false, reason: "run-id-missing" };
+  }
+  if (payload.job !== "sentiment_labeler") {
+    return { ok: false, reason: "unsupported-job" };
+  }
+  if (!payload.model?.name) {
+    return { ok: false, reason: "model-missing" };
+  }
+  if (!Number.isFinite(payload.estimatedTokens) || payload.estimatedTokens <= 0) {
+    return { ok: false, reason: "tokens-missing" };
+  }
+  if (!Number.isFinite(payload.estimatedCostUsd) || payload.estimatedCostUsd < 0) {
+    return { ok: false, reason: "cost-missing" };
+  }
+  return { ok: true };
+}
+
 async function executeLedgerPatch(
   payload: LedgerPatchPayload,
   _actor: ApprovalActor,
 ): Promise<ExecutorResult> {
   await applyLedgerPatch({ ledger: payload.ledger, patch: payload.patch });
+  return { ok: true };
+}
+
+async function executeBudgetedRun(
+  payload: BudgetedRunPayload,
+  actor: ApprovalActor,
+): Promise<ExecutorResult> {
+  await writeBudgetedApproval({
+    runId: payload.runId,
+    job: payload.job,
+    approvedBy: actor,
+    approvedAt: new Date().toISOString(),
+    payload,
+  });
   return { ok: true };
 }
 
@@ -114,6 +149,11 @@ export function createDefaultExecutors(): Map<ApprovalKind, ApprovalExecutor> {
       validate: async (payload) => validateCronPayload(payload as CronApplyPayload),
       execute: async (payload) =>
         executeCronApply({ ...(payload as CronApplyPayload), allowRecreate: true }),
+    },
+    {
+      kind: "cron.apply_budgeted",
+      validate: async (payload) => validateBudgetedPayload(payload as BudgetedRunPayload),
+      execute: async (payload, actor) => executeBudgetedRun(payload as BudgetedRunPayload, actor),
     },
     {
       kind: "ledger.patch",
