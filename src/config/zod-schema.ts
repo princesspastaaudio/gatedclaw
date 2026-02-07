@@ -2,11 +2,13 @@ import { z } from "zod";
 import { ToolsSchema } from "./zod-schema.agent-runtime.js";
 import { AgentsSchema, AudioSchema, BindingsSchema, BroadcastSchema } from "./zod-schema.agents.js";
 import { ApprovalsSchema } from "./zod-schema.approvals.js";
+import { BudgetsSchema } from "./zod-schema.budgets.js";
 import { HexColorSchema, ModelsConfigSchema } from "./zod-schema.core.js";
 import { GatingSchema } from "./zod-schema.gating.js";
 import { HookMappingSchema, HooksGmailSchema, InternalHooksSchema } from "./zod-schema.hooks.js";
 import { ChannelsSchema } from "./zod-schema.providers.js";
 import { CommandsSchema, MessagesSchema, SessionSchema } from "./zod-schema.session.js";
+import { TradingSchema } from "./zod-schema.trading.js";
 
 const BrowserSnapshotDefaultsSchema = z
   .object({
@@ -224,6 +226,8 @@ export const OpenClawSchema = z
     commands: CommandsSchema,
     approvals: ApprovalsSchema,
     gating: GatingSchema,
+    trading: TradingSchema,
+    budgets: BudgetsSchema,
     session: SessionSchema,
     cron: z
       .object({

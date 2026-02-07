@@ -3,6 +3,7 @@ import type { ApprovalsConfig } from "./types.approvals.js";
 import type { AuthConfig } from "./types.auth.js";
 import type { DiagnosticsConfig, LoggingConfig, SessionConfig, WebConfig } from "./types.base.js";
 import type { BrowserConfig } from "./types.browser.js";
+import type { BudgetsConfig } from "./types.budgets.js";
 import type { ChannelsConfig } from "./types.channels.js";
 import type { CronConfig } from "./types.cron.js";
 import type {
@@ -24,6 +25,7 @@ import type { NodeHostConfig } from "./types.node-host.js";
 import type { PluginsConfig } from "./types.plugins.js";
 import type { SkillsConfig } from "./types.skills.js";
 import type { ToolsConfig } from "./types.tools.js";
+import type { TradingConfig } from "./types.trading.js";
 
 export type OpenClawConfig = {
   meta?: {
@@ -88,6 +90,8 @@ export type OpenClawConfig = {
   commands?: CommandsConfig;
   approvals?: ApprovalsConfig;
   gating?: GatingConfig;
+  trading?: TradingConfig;
+  budgets?: BudgetsConfig;
   session?: SessionConfig;
   web?: WebConfig;
   channels?: ChannelsConfig;

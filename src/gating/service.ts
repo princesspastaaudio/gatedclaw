@@ -8,6 +8,7 @@ import type {
   ApprovalResource,
   ApprovalStatus,
   ApprovalPayload,
+  LedgerPostingsApplyPayload,
 } from "./types.js";
 import { loadConfig } from "../config/config.js";
 import { generateApprovalId, parseGatingCallbackData } from "./callback-data.js";
@@ -99,7 +100,7 @@ export function createGatingService(params: GatingServiceParams) {
   const cfg = params.cfg ?? loadConfig();
   const storePath = params.storePath ?? resolveApprovalStorePath();
   const now = params.now ?? (() => new Date());
-  const executors = createDefaultExecutors();
+  const executors = createDefaultExecutors({ cfg });
 
   async function persistRequest(request: ApprovalRequest): Promise<void> {
     await appendApprovalRequest(request, storePath);
@@ -113,7 +114,7 @@ export function createGatingService(params: GatingServiceParams) {
   }
 
   async function syncApprovalMessages(request: ApprovalRequest): Promise<void> {
-    const card = await buildApprovalCard(request);
+    const card = await buildApprovalCard(request, cfg);
     await Promise.all(
       request.postedMessages.map(async (message) => {
         try {
@@ -156,11 +157,15 @@ export function createGatingService(params: GatingServiceParams) {
     }
     const createdAt = now().toISOString();
     const approvalId = generateApprovalId();
+    const payload =
+      paramsRequest.kind === "ledger.postings.apply" && paramsRequest.payload
+        ? { ...(paramsRequest.payload as Record<string, unknown>), approvalId }
+        : paramsRequest.payload;
     const request: ApprovalRequest = {
       approvalId,
       kind: paramsRequest.kind,
       resource: paramsRequest.resource,
-      payload: paramsRequest.payload,
+      payload,
       createdBy: actor,
       createdAt,
       status: "pending",
@@ -168,7 +173,7 @@ export function createGatingService(params: GatingServiceParams) {
       postedMessages: [],
     };
     await persistRequest(request);
-    const card = await buildApprovalCard(request);
+    const card = await buildApprovalCard(request, cfg);
     const targets = resolveTargets(cfg, paramsRequest.resource);
     const postedMessages = await params.messenger.postCard({
       request,
@@ -244,6 +249,26 @@ export function createGatingService(params: GatingServiceParams) {
         return { handled: true, reason: "missing-executor" };
       }
       const result = await executor.execute(updated.payload, actor);
+      let ledgerApprovalId: string | undefined;
+      let ledgerApprovalError: string | undefined;
+      if (result.ok && updated.kind === "trade.execute") {
+        const ledgerRequest = result.details?.ledgerRequest as
+          | LedgerPostingsApplyPayload
+          | undefined;
+        if (ledgerRequest) {
+          const ledgerResponse = await requestApproval({
+            kind: "ledger.postings.apply",
+            resource: { type: "ledger", id: ledgerRequest.ledger },
+            payload: ledgerRequest,
+            actor,
+          });
+          if (ledgerResponse.ok) {
+            ledgerApprovalId = ledgerResponse.request?.approvalId;
+          } else {
+            ledgerApprovalError = ledgerResponse.reason ?? "ledger-approval-failed";
+          }
+        }
+      }
       const finalRequest = await updateRequest(updated.approvalId, (entry) => ({
         ...entry,
         audit: [
@@ -252,7 +277,11 @@ export function createGatingService(params: GatingServiceParams) {
             type: result.ok ? "executed" : "failed",
             actor,
             now: now(),
-            details: result.details,
+            details: {
+              ...result.details,
+              ledgerApprovalId,
+              ledgerApprovalError,
+            },
             note: result.message,
           }),
         ],
