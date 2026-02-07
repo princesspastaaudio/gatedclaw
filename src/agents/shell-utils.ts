@@ -19,7 +19,23 @@ function resolvePowerShellPath(): string {
   return "powershell.exe";
 }
 
-export function getShellConfig(): { shell: string; args: string[] } {
+export function resolveShellCommand(params?: { shellPath?: string }): string {
+  const configShell = params?.shellPath?.trim();
+  if (configShell) {
+    return configShell;
+  }
+  const envShell = process.env.SHELL?.trim();
+  if (envShell) {
+    return envShell;
+  }
+  if (process.platform === "win32") {
+    const fallback = resolvePowerShellPath();
+    return fallback.trim() || "sh";
+  }
+  return "bash";
+}
+
+export function getShellConfig(params?: { shellPath?: string }): { shell: string; args: string[] } {
   if (process.platform === "win32") {
     // Use PowerShell instead of cmd.exe on Windows.
     // Problem: Many Windows system utilities (ipconfig, systeminfo, etc.) write
@@ -27,13 +43,13 @@ export function getShellConfig(): { shell: string; args: string[] } {
     // When Node.js spawns cmd.exe with piped stdio, these utilities produce no output.
     // PowerShell properly captures and redirects their output to stdout.
     return {
-      shell: resolvePowerShellPath(),
+      shell: resolveShellCommand(params),
       args: ["-NoProfile", "-NonInteractive", "-Command"],
     };
   }
 
-  const envShell = process.env.SHELL?.trim();
-  const shellName = envShell ? path.basename(envShell) : "";
+  const shell = resolveShellCommand(params);
+  const shellName = shell ? path.basename(shell) : "";
   // Fish rejects common bashisms used by tools, so prefer bash when detected.
   if (shellName === "fish") {
     const bash = resolveShellFromPath("bash");
@@ -45,7 +61,6 @@ export function getShellConfig(): { shell: string; args: string[] } {
       return { shell: sh, args: ["-c"] };
     }
   }
-  const shell = envShell && envShell.length > 0 ? envShell : "sh";
   return { shell, args: ["-c"] };
 }
 

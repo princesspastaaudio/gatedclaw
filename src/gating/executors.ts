@@ -9,8 +9,10 @@ import type {
   BudgetedRunPayload,
   CronApplyPayload,
   LedgerPatchPayload,
+  TradeExecutePayload,
 } from "./types.js";
 import { writeBudgetedApproval } from "../ops/budgeted.js";
+import { executeTrade } from "../trading/execute.js";
 import { resolveCronOpsRoot, proposalExists, isValidProposalId } from "./cronops.js";
 import { applyLedgerPatch, validateLedgerPatch } from "./ledger-store.js";
 
@@ -115,6 +117,31 @@ async function validateBudgetedPayload(payload: BudgetedRunPayload): Promise<Exe
   return { ok: true };
 }
 
+async function validateTradePayload(payload: TradeExecutePayload): Promise<ExecutorValidation> {
+  if (!payload?.decisionId || typeof payload.decisionId !== "string") {
+    return { ok: false, reason: "decision-id-missing" };
+  }
+  if (!payload?.proposalId || typeof payload.proposalId !== "string") {
+    return { ok: false, reason: "proposal-id-missing" };
+  }
+  if (!payload?.symbol || typeof payload.symbol !== "string") {
+    return { ok: false, reason: "symbol-missing" };
+  }
+  if (payload.action !== "BUY" && payload.action !== "SELL") {
+    return { ok: false, reason: "action-invalid" };
+  }
+  if (!Number.isFinite(payload.qty) || payload.qty <= 0) {
+    return { ok: false, reason: "qty-invalid" };
+  }
+  if (!payload.unit || typeof payload.unit !== "string") {
+    return { ok: false, reason: "unit-invalid" };
+  }
+  if (!Number.isFinite(payload.maxUsd) || payload.maxUsd <= 0) {
+    return { ok: false, reason: "max-usd-invalid" };
+  }
+  return { ok: true };
+}
+
 async function executeLedgerPatch(
   payload: LedgerPatchPayload,
   _actor: ApprovalActor,
@@ -159,6 +186,17 @@ export function createDefaultExecutors(): Map<ApprovalKind, ApprovalExecutor> {
       kind: "ledger.patch",
       validate: async (payload) => validateLedgerPayload(payload as LedgerPatchPayload),
       execute: async (payload, actor) => executeLedgerPatch(payload as LedgerPatchPayload, actor),
+    },
+    {
+      kind: "trade.execute",
+      validate: async (payload) => validateTradePayload(payload as TradeExecutePayload),
+      execute: async (payload, actor) => {
+        const result = await executeTrade({
+          payload: payload as TradeExecutePayload,
+          actor,
+        });
+        return result;
+      },
     },
   ];
   return new Map(executors.map((executor) => [executor.kind, executor]));

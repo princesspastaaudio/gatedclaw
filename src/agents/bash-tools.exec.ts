@@ -373,6 +373,15 @@ function applyShellPath(env: Record<string, string>, shellPath?: string | null) 
   }
 }
 
+function resolveExecShell(): { shell: string; args: string[] } {
+  const config = getShellConfig();
+  const shell = config.shell?.trim();
+  if (!shell) {
+    throw new Error("Shell command resolution failed");
+  }
+  return { shell, args: config.args };
+}
+
 function maybeNotifyOnExit(session: ProcessSession, status: "completed" | "failed") {
   if (!session.backgrounded || !session.notifyOnExit || session.exitNotified) {
     return;
@@ -475,7 +484,7 @@ async function runExecProcess(opts: {
     child = spawned as ChildProcessWithoutNullStreams;
     stdin = child.stdin;
   } else if (opts.usePty) {
-    const { shell, args: shellArgs } = getShellConfig();
+    const { shell, args: shellArgs } = resolveExecShell();
     try {
       const ptyModule = (await import("@lydell/node-pty")) as unknown as {
         spawn?: PtySpawn;
@@ -542,7 +551,7 @@ async function runExecProcess(opts: {
       stdin = child.stdin;
     }
   } else {
-    const { shell, args: shellArgs } = getShellConfig();
+    const { shell, args: shellArgs } = resolveExecShell();
     const { child: spawned } = await spawnWithFallback({
       argv: [shell, ...shellArgs, opts.command],
       options: {

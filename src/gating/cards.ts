@@ -1,4 +1,9 @@
-import type { ApprovalRequest, BudgetedRunPayload, LedgerPatchPayload } from "./types.js";
+import type {
+  ApprovalRequest,
+  BudgetedRunPayload,
+  LedgerPatchPayload,
+  TradeExecutePayload,
+} from "./types.js";
 import { buildGatingCallbackData } from "./callback-data.js";
 import { loadCronProposalSummary } from "./cronops.js";
 import { summarizeLedgerPatch } from "./ledger-store.js";
@@ -122,6 +127,38 @@ export async function buildApprovalCard(request: ApprovalRequest): Promise<Appro
       summaryLine,
       modelLine,
       expectedLine,
+      statusLine,
+      `Approval: ${request.approvalId}`,
+    ]
+      .filter(Boolean)
+      .slice(0, 10);
+    return {
+      text: lines.join("\n"),
+      buttons: request.status === "pending" ? buttons : [],
+    };
+  } else if (request.kind === "trade.execute") {
+    header = "Trade Execute";
+    resourceLine = `Resource: trade ${request.resource.id}`;
+    const payload = request.payload as TradeExecutePayload;
+    summaryLine = `Summary: ${payload.action} ${payload.qty.toFixed(6)} ${payload.unit} (${payload.symbol}) max $${payload.maxUsd.toFixed(2)}`;
+    const confidenceLine = `Confidence: ${(payload.confidence * 100).toFixed(1)}% · horizon ${payload.horizon}`;
+    const notesLine = payload.notes ? `Notes: ${payload.notes}` : null;
+    buttons = [
+      [
+        {
+          text: "✅ Approve",
+          callback_data: buildGatingCallbackData(request.approvalId, "approve"),
+        },
+        { text: "❌ Deny", callback_data: buildGatingCallbackData(request.approvalId, "deny") },
+      ],
+    ];
+    const statusLine = `Status: ${formatStatusLine(request)}`;
+    const lines = [
+      header,
+      resourceLine,
+      summaryLine,
+      confidenceLine,
+      notesLine,
       statusLine,
       `Approval: ${request.approvalId}`,
     ]

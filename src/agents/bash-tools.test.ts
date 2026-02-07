@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -45,6 +46,17 @@ const normalizeText = (value?: string) =>
     .map((line) => line.replace(/\s+$/u, ""))
     .join("\n")
     .trim();
+
+const hasShellCommand = () => {
+  if (isWin) {
+    return true;
+  }
+  const candidates = ["bash", "sh"];
+  return candidates.some((candidate) => {
+    const result = spawnSync(candidate, ["--version"], { stdio: "ignore" });
+    return !result.error;
+  });
+};
 
 async function waitForCompletion(sessionId: string) {
   let status = "running";
@@ -271,7 +283,22 @@ describe("exec tool backgrounding", () => {
 });
 
 describe("exec notifyOnExit", () => {
-  it("enqueues a system event when a backgrounded exec exits", async () => {
+  const originalShell = process.env.SHELL;
+  const runTest = hasShellCommand() ? it : it.skip;
+
+  beforeEach(() => {
+    if (!isWin && defaultShell) {
+      process.env.SHELL = defaultShell;
+    }
+  });
+
+  afterEach(() => {
+    if (!isWin) {
+      process.env.SHELL = originalShell;
+    }
+  });
+
+  runTest("enqueues a system event when a backgrounded exec exits", async () => {
     const tool = createExecTool({
       allowBackground: true,
       backgroundMs: 0,

@@ -224,6 +224,29 @@ export const OpenClawSchema = z
     commands: CommandsSchema,
     approvals: ApprovalsSchema,
     gating: GatingSchema,
+    decision: z
+      .object({
+        enabled: z.boolean().optional(),
+        horizons: z.array(z.string()).optional(),
+        sentimentWindowBuckets: z.number().int().positive().optional(),
+        tapeWindowPoints: z.number().int().positive().optional(),
+        minSentimentConfidence: z.number().min(0).max(1).optional(),
+        maxDispersionPct: z.number().nonnegative().optional(),
+        minDecisionConfidence: z.number().min(0).max(1).optional(),
+        autoSubmitProposals: z.boolean().optional(),
+        maxProposalsPerRun: z.number().int().positive().optional(),
+        cooldownMinutes: z.number().int().positive().optional(),
+        sizing: z
+          .object({
+            maxUsdPerTrade: z.number().positive().optional(),
+            confidenceScale: z.union([z.literal("linear"), z.literal("sqrt")]).optional(),
+            minUsd: z.number().positive().optional(),
+          })
+          .strict()
+          .optional(),
+      })
+      .strict()
+      .optional(),
     news: z
       .object({
         rssFeeds: z
@@ -291,6 +314,13 @@ export const OpenClawSchema = z
         maxArticlesPerRun: z.number().int().positive().optional(),
         maxDailyTokens: z.number().int().positive().optional(),
         maxSingleRunCostUsd: z.number().positive().optional(),
+      })
+      .strict()
+      .optional(),
+    trading: z
+      .object({
+        maxOrderUsd: z.number().positive().optional(),
+        maxOrderAsset: z.record(z.string(), z.number().positive()).optional(),
       })
       .strict()
       .optional(),

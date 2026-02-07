@@ -2,9 +2,10 @@ export type ApprovalKind =
   | "cron.apply"
   | "cron.apply_recreate"
   | "cron.apply_budgeted"
-  | "ledger.patch";
+  | "ledger.patch"
+  | "trade.execute";
 export type ApprovalStatus = "pending" | "approved" | "denied" | "expired";
-export type ApprovalResourceType = "cron_proposal" | "ledger" | "sentiment_run";
+export type ApprovalResourceType = "cron_proposal" | "ledger" | "sentiment_run" | "trade";
 
 export type ApprovalResource = {
   type: ApprovalResourceType;
@@ -58,7 +59,24 @@ export type BudgetedRunPayload = {
   expectedValue: string;
 };
 
-export type ApprovalPayload = CronApplyPayload | LedgerPatchPayload | BudgetedRunPayload;
+export type TradeExecutePayload = {
+  decisionId: string;
+  proposalId: string;
+  symbol: string;
+  action: "BUY" | "SELL";
+  qty: number;
+  unit: string;
+  maxUsd: number;
+  confidence: number;
+  horizon: string;
+  notes?: string;
+};
+
+export type ApprovalPayload =
+  | CronApplyPayload
+  | LedgerPatchPayload
+  | BudgetedRunPayload
+  | TradeExecutePayload;
 
 export type ApprovalRequest = {
   approvalId: string;
