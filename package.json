@@ -144,6 +144,8 @@
     "test:live": "OPENCLAW_LIVE_TEST=1 CLAWDBOT_LIVE_TEST=1 vitest run --config vitest.live.config.ts",
     "test:ui": "pnpm --dir ui test",
     "test:watch": "vitest",
+    "test:unit": "vitest run src",
+    "test:decisions": "vitest run src/decisions"
     "tui": "node scripts/run-node.mjs tui",
     "tui:dev": "OPENCLAW_PROFILE=dev CLAWDBOT_PROFILE=dev node scripts/run-node.mjs --dev tui",
     "ui:build": "node scripts/ui.js build",
