@@ -21,6 +21,9 @@ COPY ui/package.json ./ui/package.json
 COPY patches ./patches
 COPY scripts ./scripts
 
+RUN echo "=== package.json (first 20 lines) ===" && sed -n '1,20p' package.json
+RUN node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package.json: OK')"
+
 RUN pnpm install --frozen-lockfile
 
 COPY . .
